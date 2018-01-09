@@ -14,9 +14,9 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
   #config.vm.box = "base"
 
-  # Setup docker
+  # Install docker in all machines
   config.vm.provision "shell", inline: <<-SHELL
-    echo INSTALLING Docker
+    echo ====== DOCKER start ======
     apt-get update
     apt-get install -y apt-transport-https ca-certificates curl software-properties-common
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
@@ -25,19 +25,41 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y docker-ce
 
-    echo DONE Installing Docker
+    echo ====== DOCKER start ======
   SHELL
 
-  config.vm.provision "shell", :run => 'always', inline: <<-SHELL
-    echo Running START scripts
-    docker run hello-world
+  # Template for java provisioning
+  $java_provision_tpl = <<-SHELL
+    echo ====== JAVA start ======
+
+    echo "LANG=en_US.UTF-8" >> /etc/environment
+    echo "LANGUAGE=en_US.UTF-8" >> /etc/environment
+    echo "LC_ALL=en_US.UTF-8" >> /etc/environment
+    echo "LC_CTYPE=en_US.UTF-8" >> /etc/environment
+
+    add-apt-repository -y ppa:webupd8team/java
+
+    apt-get update
+    apt-get -y upgrade
+
+    echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections 
+    echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
+
+    apt-get -y install oracle-java8-installer
+    echo ====== JAVA done ======
   SHELL
+
+  #config.vm.provision "shell", :run => 'always', inline: <<-SHELL
+  #  echo RUNNING START/TEST scripts
+  #  docker run hello-world
+  #SHELL
 
   config.vm.box_version = "20180105.0.0"
 
   config.vm.define "web" do |web|
     web.vm.box = "ubuntu/xenial64"
     config.vm.provision "shell", inline: <<-SHELL
+      echo Customize the box
       hostname web
     SHELL
   end
@@ -45,9 +67,45 @@ Vagrant.configure("2") do |config|
   config.vm.define "db" do |db|
     db.vm.box = "ubuntu/xenial64"    
     config.vm.provision "shell", inline: <<-SHELL
+      echo Customize the box
       hostname db
     SHELL
   end
+
+  config.vm.define "md-zookeeper" do |db|
+    db.vm.box = "ubuntu/xenial64"    
+
+    config.vm.provision "shell", inline: $java_provision_tpl
+
+    config.vm.provision "shell", inline: <<-SHELL
+      echo Customize the box
+      apt-get install -y zookeeperd 
+      hostname md-zookeeper
+    SHELL
+  end
+
+  config.vm.define "md-kafka1" do |db|
+    db.vm.box = "ubuntu/xenial64"    
+
+    config.vm.provision "shell", inline: $java_provision_tpl
+
+    config.vm.provision "shell", inline: <<-SHELL
+      echo Install Kafka
+      wget http://mirror.fibergrid.in/apache/kafka/0.10.0.1/kafka_2.10-0.10.0.1.tgz
+      mkdir /opt/Kafka
+      cd /opt/Kafka
+      tar -xvf kafka_2.10-0.10.0.1.tgz -C /opt/Kafka/
+      /opt/Kafka/kafka_2.10-0.10.0.1/bin/kafka-server-start.sh /opt/Kafka/kafka_2.10-0.10.0.1/config/server.properties
+
+      hostname md-kafka1
+    SHELL
+
+    config.vm.provision "shell", :run => 'always', inline: <<-SHELL
+      echo Start kafka
+      /opt/Kafka/kafka_2.10-0.10.0.1/bin/kafka-server-start.sh /opt/Kafka/kafka_2.10-0.10.0.1/config/server.properties
+    SHELL
+  end
+  
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
