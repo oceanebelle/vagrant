@@ -16,6 +16,11 @@ Start the vagrant box(es)
 
     vagrant up
 
+To reprovision a box, do either
+    
+    vagrant up --provision
+    vagrant provision
+
 Stop  the vagrant box(ex)
 
     vagrant halt
