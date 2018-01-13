@@ -51,32 +51,9 @@ Vagrant.configure("2") do |config|
     echo ====== JAVA done ======
   SHELL
 
-  $zookeeper_provision_tpl = <<-SHELL
-    echo Install Zookeeper
-    apt-get install -y zookeeperd
-  SHELL
+  
 
-  $kafka_provision_tpl = <<-SHELL
-    echo Install Kafka
-    
-    wget -q http://mirror.vorboss.net/apache/kafka/1.0.0/kafka_2.11-1.0.0.tgz
-
-    mkdir /opt/Kafka    
-
-    tar -xvf kafka_2.11-1.0.0.tgz -C /opt/Kafka/
-
-    cd /opt/Kafka
-
-    export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M -XX:-UseLargePages"
-
-    /opt/Kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh /opt/Kafka/kafka_2.11-1.0.0/config/server.properties
-
-  SHELL
-
-  #config.vm.provision "shell", :run => 'always', inline: <<-SHELL
-  #  echo Start kafka
-  #  /opt/Kafka/kafka_2.10-0.10.0.1/bin/kafka-server-start.sh /opt/Kafka/kafka_2.10-0.10.0.1/config/server.properties
-  #SHELL
+  
 
   $hostname_set_tpl = <<-SHELL
     echo Set the hostname as $1
@@ -88,54 +65,151 @@ Vagrant.configure("2") do |config|
 
   config.vm.box_version = "20180105.0.0"
 
-  config.vm.define "web" do |web|
-    web.vm.box = "ubuntu/xenial64"
+  # config.vm.define "web" do |web|
+  #  web.vm.box = "ubuntu/xenial64"
+  
+  #  web.vm.network "private_network", ip: "10.0.0.14"
+  
+  #  web.vm.provision "shell", inline: $hostname_set_tpl, :args => "web" 
+  
+  #  #web.vm.provision "shell", inline: $docker_provision_tpl 
+  # end
 
-    web.vm.network "private_network", ip: "10.0.0.14"
+  # config.vm.define "db" do |db|
+  #   db.vm.box = "ubuntu/xenial64"    
 
-    web.vm.provision "shell", inline: $hostname_set_tpl, :args => "web" 
+  #   db.vm.network "private_network", ip: "10.0.0.13"
 
-    #web.vm.provision "shell", inline: $docker_provision_tpl
+  #   db.vm.provision "shell", inline: $hostname_set_tpl, :args => "db" 
 
-    
-  end
-
-  config.vm.define "db" do |db|
-    db.vm.box = "ubuntu/xenial64"    
-
-    db.vm.network "private_network", ip: "10.0.0.13"
-
-    db.vm.provision "shell", inline: $hostname_set_tpl, :args => "db" 
-
-    #db.vm.provision "shell", inline: $docker_provision_tpl
+  #   #db.vm.provision "shell", inline: $docker_provision_tpl
 
     
-  end
+  # end
 
-  config.vm.define "md-zookeeper" do |zookeeper|
+
+  $zookeeper_provision_tpl = <<-SHELL
+    echo Install Zookeeper
+    apt-get install -y zookeeperd
+  SHELL
+
+  
+
+
+
+  $kafka_provision_tpl = <<-SHELL
+    echo Install Kafka
+    
+    wget -q http://mirror.vorboss.net/apache/kafka/1.0.0/kafka_2.11-1.0.0.tgz
+
+    mkdir /opt/Kafka    
+
+    tar -xvf kafka_2.11-1.0.0.tgz -C /opt/Kafka/
+
+    cd /opt/Kafka    
+
+  SHELL
+
+  
+
+  $kafka_start_tpl = <<-SHELL
+    echo Start kafka
+
+    export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M -XX:-UseLargePages"
+
+    if [ -f "/home/vagrant/server.properties" ] 
+    then    
+      echo Found uploaded file properties
+      /opt/Kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh -daemon /home/vagrant/server.properties
+    else
+      /opt/Kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh -daemon /opt/Kafka/kafka_2.11-1.0.0/config/server.properties 
+    fi
+  SHELL
+
+  $zk_start_tpl = <<-SHELL
+    echo Start Zookeeper
+
+    export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M -XX:-UseLargePages"
+
+    if [ -f /home/vagrant/zookeeper.properties ] 
+    then    
+      /opt/Kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh -daemon /home/vagrant/zookeeper.properties
+    else
+      /opt/Kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh -daemon /opt/Kafka/kafka_2.11-1.0.0/config/zookeeper.properties 
+    fi
+  SHELL
+
+  config.vm.define "md-zook" do |zookeeper|
     zookeeper.vm.box = "ubuntu/xenial64"    
 
-    zookeeper.vm.network "private_network", ip: "10.0.0.12"
+    zookeeper.vm.network "private_network", ip: "10.0.0.100"
+    zookeeper.vm.hostname="zookeeper"
 
-    zookeeper.vm.provision "shell", inline: $hostname_set_tpl, :args => "zookeeper" 
+    zookeeper.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "zookeeper"
 
     zookeeper.vm.provision "shell", inline: $java_provision_tpl
 
-    zookeeper.vm.provision "shell", inline: $zookeeper_provision_tpl
-
+    zookeeper.vm.provision "shell", inline: $zookeeper_provision_tpl    
     
   end
 
   config.vm.define "md-kafka1" do |kafka1|
     kafka1.vm.box = "ubuntu/xenial64"    
 
-    kafka1.vm.network "private_network", ip: "10.0.0.11"
+    kafka1.vm.network "private_network", ip: "10.0.0.101"
+    kafka1.vm.hostname="md-kafka1"
 
-    kafka1.vm.provision "shell", inline: $hostname_set_tpl, :args => "kafka1"
+    kafka1.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "kafka1"
 
     kafka1.vm.provision "shell", inline: $java_provision_tpl
 
     kafka1.vm.provision "shell", inline: $kafka_provision_tpl
+
+    #kafka1.vm.synced_folder "kafka1", "/vagrant"    
+    kafka1.vm.provision "file", source: "./kafka1/server.properties", destination: "/home/vagrant/server.properties"
+    
+
+    # use kafka's zookeeper single node
+    #kafka1.vm.provision "shell", run: "always", inline: $zk_start_tpl
+
+    kafka1.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+    
+  end
+
+  config.vm.define "md-kafka2" do |kafka2|
+    kafka2.vm.box = "ubuntu/xenial64"    
+
+    kafka2.vm.network "private_network", ip: "10.0.0.102"
+    kafka2.vm.hostname="md-kafka2"
+
+    kafka2.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "kafka2"
+
+    kafka2.vm.provision "shell", inline: $java_provision_tpl
+
+    kafka2.vm.provision "shell", inline: $kafka_provision_tpl
+
+    kafka2.vm.provision "file", source: "./kafka2/server.properties", destination: "/home/vagrant/server.properties"
+
+    kafka2.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+    
+  end
+
+  config.vm.define "md-kafka3" do |kafka3|
+    kafka3.vm.box = "ubuntu/xenial64"    
+
+    kafka3.vm.network "private_network", ip: "10.0.0.103"
+    kafka3.vm.hostname="md-kafka3"
+
+    kafka3.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "kafka3"
+
+    kafka3.vm.provision "shell", inline: $java_provision_tpl
+
+    kafka3.vm.provision "shell", inline: $kafka_provision_tpl
+
+    kafka3.vm.provision "file", source: "./kafka3/server.properties", destination: "/home/vagrant/server.properties"
+
+    kafka3.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+
     
   end
   
