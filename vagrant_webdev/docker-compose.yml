@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  tomcat:
+    image: 'bitnami/tomcat:latest'
+    ports:
+      - '8080:8080'
+    volumes:
+      - /home/vagrant/tomcat:/bitnami

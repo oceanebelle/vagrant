@@ -26,6 +26,11 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y docker-ce
 
+
+    echo Install docker-compose
+    curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+
     echo ====== DOCKER start ======
   SHELL
 
@@ -44,14 +49,29 @@ Vagrant.configure("2") do |config|
 
     tomcat.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "tomcat-dev"
 
+    # exposes the machines 8080 port as localhost:8081
+    tomcat.vm.network "forwarded_port", guest: 8080, host: 8081, host_ip: "127.0.0.1"
+
+    tomcat.vm.provision "file", source: "./docker-compose.yml", destination: "/home/vagrant/docker-compose.yml"
+
     tomcat.vm.provision "shell", inline: $docker_provision_tpl
 
     tomcat.vm.provision "shell", inline: <<-SHELL
-      echo "use docker to get a tomcat image"
+      echo "start up the tomcat docker"
 
-      docker pull bitnami/tomcat:latest
+      # need to copy the docker-compose.yml file first! 
+      # and cd to directory
+      mkdir -p /home/vagrant/tomcat
 
-      docker run -v /path/to/tomcat-persistence:/bitnami bitnami/tomcat:latest
+    SHELL
+
+    tomcat.vm.provision "shell", run: "always", inline: <<-SHELL
+      echo "start up the tomcat docker"
+
+      # need to copy the docker-compose.yml file first! 
+      # and cd to directory
+      cd /home/vagrant
+      docker-compose up -d      
 
     SHELL
     
