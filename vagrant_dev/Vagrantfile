@@ -12,6 +12,8 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
+  
+  # headless ubuntu version
   config.vm.box = "ubuntu/xenial64"  
   config.vm.box_version = "20180105.0.0"
   config.vm.network "private_network", ip: "10.0.1.10"
@@ -36,42 +38,52 @@ Vagrant.configure("2") do |config|
 
   $hostname_set_tpl = <<-SHELL
     echo Set the hostname as $1
-    hostname $1
+    #hostnamectl set-hostname $1 --pretty --static
 
-    echo Check ip address
-    ip addr
+    echo 127.0.0.1 localhost >> /etc/hosts
+    echo 127.0.0.1 $1 >> /etc/hosts
+
+    #echo Check ip address
+    #ip addr
   SHELL
   
 
-  config.vm.define "tomcat-dev" do |tomcat|
-    tomcat.vm.network "private_network", ip: "10.0.1.10"
-    tomcat.vm.hostname="tomcat-dev"
+  config.vm.define "dev-sandbox" do |dev|
+    dev.vm.network "private_network", ip: "10.0.1.10"
+    dev.vm.hostname="dev-sandbox"    
 
-    tomcat.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "tomcat-dev"
+    dev.vm.provision "shell", run: "always", inline: $hostname_set_tpl, :args => "tomcat-dev"
 
-    # exposes the machines 8080 port as localhost:8081
-    tomcat.vm.network "forwarded_port", guest: 8080, host: 8081, host_ip: "127.0.0.1"
+    # exposes the ports used by tomcat docker
+    dev.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+    dev.vm.network "forwarded_port", guest: 1099, host: 1099, host_ip: "127.0.0.1"
+    dev.vm.network "forwarded_port", guest: 8005, host: 8005, host_ip: "127.0.0.1"
+    dev.vm.network "forwarded_port", guest: 8009, host: 8009, host_ip: "127.0.0.1"
+    dev.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
 
-    tomcat.vm.provision "file", source: "./docker-compose.yml", destination: "/home/vagrant/docker-compose.yml"
+    # instead of this just copy files via /vagrant directory
+    #dev.vm.provision "file", source: "./docker-compose.yml", destination: "/home/vagrant/docker-compose.yml"
 
-    tomcat.vm.provision "shell", inline: $docker_provision_tpl
+    dev.vm.provision "shell", inline: $docker_provision_tpl
 
-    tomcat.vm.provision "shell", inline: <<-SHELL
-      echo "start up the tomcat docker"
-
+    dev.vm.provision "shell", inline: <<-SHELL
       # need to copy the docker-compose.yml file first! 
       # and cd to directory
-      mkdir -p /home/vagrant/tomcat
+      echo Setup TOMCAT paths
+      mkdir -p /home/vagrant/tomcat-base      
 
     SHELL
 
-    tomcat.vm.provision "shell", run: "always", inline: <<-SHELL
-      echo "start up the tomcat docker"
+    dev.vm.provision "shell", run: "always", inline: <<-SHELL
+      echo "start up the TOMCAT docker"
 
       # need to copy the docker-compose.yml file first! 
       # and cd to directory
-      cd /home/vagrant
-      docker-compose up -d      
+      cd /vagrant/tomcat
+      docker-compose up --build -d      
+
+      # docker not yet up so this command may fail
+      #cp /vagrant/tmp/tomcat/apps/*.war /home/vagrant/tomcat-base/tomcat/data/
 
     SHELL
     
@@ -112,13 +124,13 @@ Vagrant.configure("2") do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
+  config.vm.provider "virtualbox" do |vb|
   #   # Display the VirtualBox GUI when booting the machine
   #   vb.gui = true
   #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
+     # Customize the amount of memory on the VM:
+    vb.memory = "1024"
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.

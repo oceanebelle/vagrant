@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  tomcat:
+    build: . 
+#    image: 'bitnami/tomcat:8.5-master'
+#    image: tomcat:8.5-alpine
+    image: jmxtomcat
+    ports:
+      - '8080:8080'
+      - '8005:8005'
+      - '8009:8009'
+      - '8000:8000'
+      - '1099:1099'
+    volumes:
+#      - /home/vagrant/tomcat-base:/bitnami
+#       - /home/vagrant/tomcat-base:/usr/local/tomcat
+#      - /vagrant/tmp/tomcat/apps/:/usr/local/tomcat/webapps/
+      - /vagrant/tmp/tomcat/apps:/mnt/tomcat/apps
+    environment:
+      - JMX=true

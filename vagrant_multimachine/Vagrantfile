@@ -57,7 +57,9 @@ Vagrant.configure("2") do |config|
 
   $hostname_set_tpl = <<-SHELL
     echo Set the hostname as $1
-    hostname $1
+    
+    echo 127.0.0.1 localhost >> /etc/hosts
+    echo 127.0.0.1 $1 >> /etc/hosts
 
     echo Check ip address
     ip addr
