@@ -1,7 +1,5 @@
 # Dev environment sandbox. Every tool will have its own Dockerfiles
 
-TOMCAT Docker file found at: https://hub.docker.com/r/bitnami/tomcat/
-
 ## Prerequisites: 
  - Uses Vagrant and VirtualBox
  - Download source from github
@@ -9,14 +7,14 @@ TOMCAT Docker file found at: https://hub.docker.com/r/bitnami/tomcat/
  - ./tmp/ files in a vagrant is not under source control and so volatile files can be stored there
 
 
-# Managing vagrant
+# Vagrant
  - Navigate to root directory where ```Vagrantfile``` is found
  - Run command ```vagrant up``` then move on to next section for starting Tomcat docker images
  - To stop vagrant box ```vagrant halt```
  - To scrub vagrant box ```vagrant destroy```
  - To display existing vagrant foxes ```vagrant global-status```
 
-# Starting Tomcat image in vagrant host: 
+# Tomcat
  - N.B. Please note that vagrant provisioning already starts tomcat docker image
  - Login using to vagrant box ```vagrant ssh```
  - Check for running docker images ```sudo docker ps -a```
@@ -30,7 +28,7 @@ TOMCAT Docker file found at: https://hub.docker.com/r/bitnami/tomcat/
 
  - Stop tomcat docker using ```sudo docker-compose down```
  
-### Troubleshoot running docker image
+### Troubleshoot running tomcat docker image
  - After login via vagrant ssh run, to login to docker image
 
     ``` sudo docker exec -it tomcat_jmx bash ```
