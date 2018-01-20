@@ -69,8 +69,8 @@ Vagrant.configure("2") do |config|
     dev.vm.provision "shell", inline: <<-SHELL
       # need to copy the docker-compose.yml file first! 
       # and cd to directory
-      echo Setup TOMCAT paths
-      mkdir -p /home/vagrant/tomcat-base      
+      #echo Setup TOMCAT paths
+      #mkdir -p /home/vagrant/tomcat-base      
 
     SHELL
 
@@ -80,10 +80,7 @@ Vagrant.configure("2") do |config|
       # need to copy the docker-compose.yml file first! 
       # and cd to directory
       cd /vagrant/tomcat
-      docker-compose up --build -d      
-
-      # docker not yet up so this command may fail
-      #cp /vagrant/tmp/tomcat/apps/*.war /home/vagrant/tomcat-base/tomcat/data/
+      docker-compose up --build -d
 
     SHELL
     
@@ -129,7 +126,7 @@ Vagrant.configure("2") do |config|
   #   vb.gui = true
   #
      # Customize the amount of memory on the VM:
-    vb.memory = "1024"
+    vb.memory = "4096"
   end
   #
   # View the documentation for the provider you are using for more

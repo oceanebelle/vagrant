@@ -1,6 +1,6 @@
 FROM tomcat:8.5-alpine
 
-LABEL author=oceanebelle
+LABEL maintainer=oceanebelle
 
 VOLUME /mnt/tomcat/apps
 VOLUME /mnt/tomcat/conf

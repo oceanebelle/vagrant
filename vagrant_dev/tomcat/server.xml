@@ -121,7 +121,7 @@
       </Realm>
 
       <Host name="localhost"  appBase="/mnt/tomcat/apps"
-            unpackWARs="true" autoDeploy="true">      
+            unpackWARs="true" autoDeploy="true" undeployOldVersions="true">      
 
         <!-- SingleSignOn valve, share authentication between web applications
              Documentation at: /docs/config/valve.html -->

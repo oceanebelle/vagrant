@@ -2,10 +2,11 @@ version: '2'
 
 services:
   tomcat:
+    container_name: tomcat_jmx
     build: . 
 #    image: 'bitnami/tomcat:8.5-master'
 #    image: tomcat:8.5-alpine
-    image: jmxtomcat
+    image: img_tomcat_jmx
     ports:
       - '8080:8080'
       - '8005:8005'
