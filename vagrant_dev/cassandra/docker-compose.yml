@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  tomcat:
+    container_name: cassandra
+    #build: . 
+    image: 'cassandra:3.0.15'
+    ports:
+      - '7000:7000'
+      - '7001:7001'
+      - '7199:7199'
+      - '9042:9042'
+      - '9160:9160'
+    volumes:
+#      - /home/vagrant/tomcat-base:/bitnami
+#       - /home/vagrant/tomcat-base:/usr/local/tomcat
+#      - /vagrant/tmp/tomcat/apps/:/usr/local/tomcat/webapps/
+      - /mnt/cassandra:/var/lib/cassandra
+      - /vagrant/cassandra:/mnt/cassandra/scripts
+    environment:
+      - JMX=true
