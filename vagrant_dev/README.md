@@ -16,17 +16,29 @@
 
 # Tomcat
  - N.B. Please note that vagrant provisioning already starts tomcat docker image
- - Login using to vagrant box ```vagrant ssh```
- - Check for running docker images ```sudo docker ps -a```
- - Then run the following commands to start the tomcat docker
+ - Login using to vagrant box and run the following commands to start the tomcat docker
 
-    ```
-    cd /vagrant/tomcat    
-    sudo docker-compose up --build -d    
-    sudo docker logs tomcat_jmx -f
-    ```
+```bash
+# from host login to vagrant vbox using ssh
+(host       )$ vagrant ssh
 
- - Stop tomcat docker using ```sudo docker-compose down```
+# check if tomcat is running
+(vagrant    )$ sudo docker ps -a
+# navigate to where docker-compose.yml resides
+(vagrant    )$ cd /vagrant/tomcat
+# if running, stop tomcat
+(vagrant    )$ sudo docker-compose down
+# start tomcat, check logs
+(vagrant    )$ sudo docker-compose up --build -d    
+(vagrant    )$ sudo docker logs tomcat_jmx -f
+# login to docker tomcat, run additional troubleshooting commands
+(vagrant    )$ sudo docker exec -it tomcat_jmx bash
+
+# query environment variables
+(tomcat_jmx )$ env
+(tomcat_jmx )$ cd /mnt/tomcat/apps
+(tomcat_jmx )$ netstat -plunt
+```
  
 ### Troubleshoot running tomcat docker image
  - After login via vagrant ssh run, to login to docker image
