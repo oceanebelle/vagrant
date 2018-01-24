@@ -72,12 +72,12 @@ Vagrant.configure("2") do |config|
     dev.vm.provision "shell", inline: $docker_provision_tpl
 
     dev.vm.provision "shell", run: "always", inline: <<-SHELL
-      echo "======> start up the TOMCAT docker"
+      #echo "======> start up the TOMCAT docker"
 
       # need to copy the docker-compose.yml file first! 
       # and cd to directory
-      cd /vagrant/tomcat
-      docker-compose up --build -d
+      #cd /vagrant/tomcat
+      #docker-compose up --build -d
 
     SHELL
 
@@ -87,10 +87,10 @@ Vagrant.configure("2") do |config|
       # make a nice space to put cassandra data files in.
       mkdir -p /mnt/cassandra/scripts
       cp /vagrant/cassandra/* /mnt/cassandra/scripts/
-      # chcon -Rt svirt_sandbox_file_t /mnt/cassandra
       
-      cd /vagrant/cassandra
-      docker-compose up --build -d
+      
+      #cd /vagrant/cassandra
+      #docker-compose up --build -d
 
     SHELL
     

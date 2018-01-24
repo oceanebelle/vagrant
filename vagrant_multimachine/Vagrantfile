@@ -45,9 +45,9 @@ Vagrant.configure("2") do |config|
     echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections 
     echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
 
-    apt-get install -y oracle-java8-installer
+    apt-get install -qq -y oracle-java8-installer
 
-    apt-get install -y oracle-java8-set-default
+    apt-get install -qq -y oracle-java8-set-default
     echo ====== JAVA done ======
   SHELL
 
@@ -102,11 +102,12 @@ Vagrant.configure("2") do |config|
   $kafka_provision_tpl = <<-SHELL
     echo Install Kafka
     
-    wget -q http://mirror.vorboss.net/apache/kafka/1.0.0/kafka_2.11-1.0.0.tgz
+    #wget -q http://mirror.vorboss.net/apache/kafka/1.0.0/kafka_2.11-1.0.0.tgz
+    wget -nv --quiet https://archive.apache.org/dist/kafka/0.10.1.1/kafka_2.11-0.10.1.1.tgz
 
     mkdir /opt/Kafka    
 
-    tar -xvf kafka_2.11-1.0.0.tgz -C /opt/Kafka/
+    tar -xvf kafka_2.11-0.10.1.1.tgz -C /opt/Kafka/
 
     cd /opt/Kafka    
 
@@ -119,31 +120,15 @@ Vagrant.configure("2") do |config|
 
     export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M -XX:-UseLargePages"
 
-    if [ -f "/home/vagrant/server.properties" ] 
-    then    
-      echo Found uploaded file properties
-      /opt/Kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh -daemon /home/vagrant/server.properties
-    else
-      /opt/Kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh -daemon /opt/Kafka/kafka_2.11-1.0.0/config/server.properties 
-    fi
-  SHELL
-
-  $zk_start_tpl = <<-SHELL
-    echo Start Zookeeper
-
-    export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M -XX:-UseLargePages"
-
-    if [ -f /home/vagrant/zookeeper.properties ] 
-    then    
-      /opt/Kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh -daemon /home/vagrant/zookeeper.properties
-    else
-      /opt/Kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh -daemon /opt/Kafka/kafka_2.11-1.0.0/config/zookeeper.properties 
-    fi
+    echo starting KAFKA with $1 server.properties
+    /opt/Kafka/kafka_2.11-0.10.1.1/bin/kafka-server-start.sh -daemon /vagrant/$1/server.properties
+    
   SHELL
 
   config.vm.define "md-zook" do |zookeeper|
     zookeeper.vm.box = "ubuntu/xenial64"    
 
+    zookeeper.vm.network "forwarded_port", guest: 2181, host: 2181, host_ip: "127.0.0.1"
     zookeeper.vm.network "private_network", ip: "10.0.0.100"
     zookeeper.vm.hostname="zookeeper"
 
@@ -158,6 +143,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "md-kafka1" do |kafka1|
     kafka1.vm.box = "ubuntu/xenial64"    
 
+    kafka1.vm.network "forwarded_port", guest: 9092, host: 10001, host_ip: "127.0.0.1"
     kafka1.vm.network "private_network", ip: "10.0.0.101"
     kafka1.vm.hostname="md-kafka1"
 
@@ -165,22 +151,23 @@ Vagrant.configure("2") do |config|
 
     kafka1.vm.provision "shell", inline: $java_provision_tpl
 
-    kafka1.vm.provision "shell", inline: $kafka_provision_tpl
+    kafka1.vm.provision "shell", inline: $kafka_provision_tpl, :args => "kafka1"
 
     #kafka1.vm.synced_folder "kafka1", "/vagrant"    
-    kafka1.vm.provision "file", source: "./kafka1/server.properties", destination: "/home/vagrant/server.properties"
+    #kafka1.vm.provision "file", source: "./kafka1/server.properties", destination: "/home/vagrant/server.properties"
     
 
     # use kafka's zookeeper single node
     #kafka1.vm.provision "shell", run: "always", inline: $zk_start_tpl
 
-    kafka1.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+    kafka1.vm.provision "shell", run: "always", inline: $kafka_start_tpl, :args => "kafka1"
     
   end
 
   config.vm.define "md-kafka2" do |kafka2|
     kafka2.vm.box = "ubuntu/xenial64"    
 
+    kafka2.vm.network "forwarded_port", guest: 9092, host: 10002, host_ip: "127.0.0.1"
     kafka2.vm.network "private_network", ip: "10.0.0.102"
     kafka2.vm.hostname="md-kafka2"
 
@@ -190,15 +177,16 @@ Vagrant.configure("2") do |config|
 
     kafka2.vm.provision "shell", inline: $kafka_provision_tpl
 
-    kafka2.vm.provision "file", source: "./kafka2/server.properties", destination: "/home/vagrant/server.properties"
+    #kafka2.vm.provision "file", source: "./kafka2/server.properties", destination: "/home/vagrant/server.properties"
 
-    kafka2.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+    kafka2.vm.provision "shell", run: "always", inline: $kafka_start_tpl, :args => "kafka2"
     
   end
 
   config.vm.define "md-kafka3" do |kafka3|
     kafka3.vm.box = "ubuntu/xenial64"    
 
+    kafka3.vm.network "forwarded_port", guest: 9092, host: 10003, host_ip: "127.0.0.1"
     kafka3.vm.network "private_network", ip: "10.0.0.103"
     kafka3.vm.hostname="md-kafka3"
 
@@ -208,9 +196,9 @@ Vagrant.configure("2") do |config|
 
     kafka3.vm.provision "shell", inline: $kafka_provision_tpl
 
-    kafka3.vm.provision "file", source: "./kafka3/server.properties", destination: "/home/vagrant/server.properties"
+    #kafka3.vm.provision "file", source: "./kafka3/server.properties", destination: "/home/vagrant/server.properties"
 
-    kafka3.vm.provision "shell", run: "always", inline: $kafka_start_tpl
+    kafka3.vm.provision "shell", run: "always", inline: $kafka_start_tpl, :args => "kafka3"
 
     
   end

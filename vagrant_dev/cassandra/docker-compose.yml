@@ -16,6 +16,5 @@ services:
 #       - /home/vagrant/tomcat-base:/usr/local/tomcat
 #      - /vagrant/tmp/tomcat/apps/:/usr/local/tomcat/webapps/
       - /mnt/cassandra:/var/lib/cassandra
-      - /vagrant/cassandra:/mnt/cassandra/scripts
     environment:
       - JMX=true
